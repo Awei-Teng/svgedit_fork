@@ -67,6 +67,8 @@ export const putLocale = async function (givenParam, goodLangs) {
   if (!goodLangs.includes(langParam) && langParam !== 'test') {
     langParam = 'en'
   }
+
+  langParam = 'zh-CN'
   const module = await import(`./locale/lang.${encodeURIComponent(langParam)}.js`)
   i18next.init({
     lng: langParam,

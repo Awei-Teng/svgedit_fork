@@ -228,10 +228,17 @@ class MainMenu {
     template.innerHTML = `
     <se-menu id="main_button" label="SVG-Edit" src="logo.svg" alt="logo">
         <se-menu-item id="tool_export" label="tools.export_img" src="export.svg"></se-menu-item>
-        <se-menu-item id="tool_docprops" label="tools.docprops" shortcut="shift+D" src="docprop.svg"></se-menu-item>
+        <se-menu-item id="tool_docprops" label="tools.docprops" shortcut="D" src="docprop.svg"></se-menu-item>
         <se-menu-item id="tool_editor_prefs" label="config.editor_prefs" src="editPref.svg"></se-menu-item>
-        <se-menu-item id="tool_editor_homepage" label="tools.editor_homepage" src="logo.svg"></se-menu-item>
+        <se-menu-item id="tool_editor_homepage" label="tools.editor_homepage" src="logo.svg" style="display:none"></se-menu-item>
     </se-menu>`
+    // template.innerHTML = `
+    // <se-menu id="main_button" label="SVG-Edit" src="logo.svg" alt="logo">
+    //     <se-menu-item id="tool_export" label="tools.export_img" src="export.svg"></se-menu-item>
+    //     <se-menu-item id="tool_docprops" label="tools.docprops" shortcut="D" src="docprop.svg"></se-menu-item>
+    //     <se-menu-item id="tool_editor_prefs" label="config.editor_prefs" src="editPref.svg"></se-menu-item>
+    //     <se-menu-item id="tool_editor_homepage" label="tools.editor_homepage" src="logo.svg"></se-menu-item>
+    // </se-menu>`
     this.editor.$svgEditor.append(template.content.cloneNode(true))
 
     // register action to main menu entries

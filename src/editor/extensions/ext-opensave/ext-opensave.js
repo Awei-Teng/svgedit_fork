@@ -16,6 +16,15 @@
    * @returns {void}
    */
 import { fileOpen, fileSave } from 'browser-fs-access'
+import {
+  replaceSvgMetadata,
+  extractAndEnhanceMetadata,
+  parseSVG,
+  serializeSVG,
+  addDomId,
+  compareAndFillSvgDom,
+  customInitLayer
+} from './utils.js'
 
 const name = 'opensave'
 let handle = null
@@ -34,7 +43,7 @@ const loadExtensionTranslation = async function (svgEditor) {
 
 export default {
   name,
-  async init (_S) {
+  async init(_S) {
     const svgEditor = this
     const { svgCanvas } = svgEditor
     const { $id, $click } = svgCanvas
@@ -129,6 +138,7 @@ export default {
       if (ok === 'Cancel') {
         return
       }
+      window.metadataArray = null
       svgEditor.leftPanel.clickSelect()
       svgEditor.svgCanvas.clear()
       svgEditor.svgCanvas.setResolution(x, y)
@@ -138,6 +148,8 @@ export default {
       svgEditor.topPanel.updateContextPanel()
       svgEditor.topPanel.updateTitle('untitled.svg')
     }
+
+
 
     /**
      * By default,  this.editor.svgCanvas.open() is a no-op. It is up to an extension
@@ -155,7 +167,24 @@ export default {
           mimeTypes: ['image/*']
         })
         const svgContent = await blob.text()
-        await svgEditor.loadSvgString(svgContent)
+
+        //替换script为metadata
+        const scriptToMeta0 = svgContent.replaceAll(`class="qz-script"`, ``)
+        const scriptToMeta1 = scriptToMeta0.replaceAll('<script', `<metadata class="qz-script"`)
+        const scriptToMeta2 = scriptToMeta1.replaceAll('</script>', `</metadata>`)
+
+        //提取metadata数据
+        const { enhancedSvgString, metadataArray } = extractAndEnhanceMetadata(scriptToMeta2);
+        window.metadataArray = metadataArray
+
+        //给SVG所有dom添加ID
+        const initSvgDom = parseSVG(enhancedSvgString)
+        window.initSvgDom = initSvgDom
+        addDomId(initSvgDom);
+
+        const loadSvgString = serializeSVG(initSvgDom)
+
+        await svgEditor.loadSvgString(loadSvgString)
         svgEditor.updateCanvas()
         handle = blob.handle
         svgEditor.topPanel.updateTitle(blob.name)
@@ -165,6 +194,11 @@ export default {
           size: blob.size,
           type: blob.type
         })
+        if (window.metadataArray){
+          customInitLayer();//初始化图层逻辑
+        }
+        svgEditor.layersPanel.updateContextPanel()
+        svgEditor.layersPanel.populateLayers()
       } catch (err) {
         if (err.name !== 'AbortError') {
           return console.error(err)
@@ -186,6 +220,7 @@ export default {
       const blob = new Blob(byteArrays, { type: contentType })
       return blob
     }
+
 
     /**
      *
@@ -214,7 +249,30 @@ export default {
         svgCanvas.setSvgOption('apply', true)
 
         // no need for doctype, see https://jwatt.org/svg/authoring/#doctype-declaration
-        const svg = '<?xml version="1.0"?>\n' + svgCanvas.svgCanvasToString()
+        let svgContentStr = svgCanvas.svgCanvasToString()
+        if (window.metadataArray){
+          //还原metadata标签数据
+          const mySvgStr = svgCanvas.svgCanvasToString()
+          const enhancedSvgString = replaceSvgMetadata(mySvgStr, window.metadataArray);
+
+          //将类名为qz-script还原成script标签
+          const svgDom = parseSVG(enhancedSvgString)
+          let elements = svgDom.getElementsByClassName("qz-script");
+          for (let i = 0; i < elements.length; i++) {
+            let newScript = document.createElement("script");
+            // 复制原有元素的所有属性
+            for (let j = 0; j < elements[i].attributes.length; j++) {
+              let attr = elements[i].attributes[j];
+              newScript.setAttribute(attr.name, attr.value);
+            }
+            newScript.innerHTML = elements[i].innerHTML;
+            elements[i].parentNode.replaceChild(newScript, elements[i]);
+          }
+          //比对生成的svg元素的属性是否缺失
+          const resultSvgDom = compareAndFillSvgDom(window.initSvgDom, svgDom)
+          svgContentStr = serializeSVG(resultSvgDom)
+        }
+        const svg = '<?xml version="1.0"?>\n' + svgContentStr
         const b64Data = svgCanvas.encode64(svg)
         const blob = b64toBlob(b64Data, 'image/svg+xml')
         try {
@@ -246,7 +304,7 @@ export default {
     return {
       name: svgEditor.i18next.t(`${name}:name`),
       // The callback should be used to load the DOM with the appropriate UI items
-      callback () {
+      callback() {
         const buttonTemplate = `
         <se-menu-item id="tool_clear" label="opensave.new_doc" shortcut="N" src="new.svg"></se-menu-item>`
         svgCanvas.insertChildAtIndex($id('main_button'), buttonTemplate, 0)

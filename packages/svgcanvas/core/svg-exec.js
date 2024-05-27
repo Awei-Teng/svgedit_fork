@@ -383,6 +383,7 @@ const setSvgString = (xmlString, preventUndo) => {
   try {
     // convert string into XML document
     const newDoc = text2xml(xmlString)
+    console.log(newDoc)
     if (
       newDoc.firstElementChild &&
       newDoc.firstElementChild.namespaceURI !== NS.SVG

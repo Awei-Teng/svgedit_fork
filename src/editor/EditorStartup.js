@@ -61,6 +61,8 @@ class EditorStartup {
   */
   async init () {
     if ('localStorage' in window) {
+      window.localStorage.removeItem('svgedit-default')
+      window.localStorage.removeItem('title-svgedit-default')
       this.storage = window.localStorage
     }
     this.configObj.load()

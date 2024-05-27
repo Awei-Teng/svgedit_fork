@@ -89,7 +89,9 @@ class LayersPanel {
     let uniqName
     let i = this.editor.svgCanvas.getCurrentDrawing().getNumLayers()
     do {
-      uniqName = this.editor.i18next.t('layers.layer') + ' ' + ++i
+      const num = window.metadataArray ? i++ : ++i;
+      uniqName = '图层' + ' ' + num
+      // uniqName = this.editor.i18next.t('layers.layer') + ' ' + num
     } while (this.editor.svgCanvas.getCurrentDrawing().hasLayer(uniqName))
 
     const newName = prompt(
@@ -113,6 +115,13 @@ class LayersPanel {
    * @returns {void}
    */
   deleteLayer () {
+    if (window.metadataArray) {
+      const layerList = $id('layerlist').querySelectorAll('.layer')
+      if (layerList && layerList.length <= 2) {
+        alert("请至少保留有一个图层")
+        return
+      }
+    }
     if (this.editor.svgCanvas.deleteCurrentLayer()) {
       this.updateContextPanel()
       this.populateLayers()
@@ -178,6 +187,10 @@ class LayersPanel {
    */
   moveLayer (pos) {
     const curPos = this.editor.svgCanvas.indexCurrentLayer()
+    console.log(curPos, pos)
+
+    //不可移到最下面
+    if (curPos === 1 && pos ===1) return;
     if (curPos !== -1) {
       this.editor.svgCanvas.setCurrentLayerPosition(curPos - pos)
       this.populateLayers()
@@ -285,6 +298,15 @@ class LayersPanel {
       element.addEventListener('mouseout', (_evt) => {
         self.toggleHighlightLayer()
       })
+
+      // 隐藏Layer 1
+      if (element.textContent === 'Layer 1') {
+        element.textContent = "图层 1"
+        if (window.metadataArray){
+          // 对该 element 进行一些操作
+          element.style.display = 'none';
+        }
+      }
     })
     const elements = $id('layerlist').querySelectorAll('td.layervis')
     Array.from(elements).forEach(function (element) {

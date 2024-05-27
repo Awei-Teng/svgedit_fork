@@ -101,12 +101,13 @@ export default {
     * @returns {void}
     */
     function showForeignEditor () {
+      debugger;
       const elt = selElems[0];
       if (!elt || editingforeign) { return; }
       editingforeign = true;
       toggleSourceButtons(true);
       elt.removeAttribute('fill');
-
+      console.warn(elt)
       const str = svgCanvas.svgToString(elt, 0);
       $id('svg_source_textarea').value = str;
       $id('#svg_source_editor').style.display = 'block';

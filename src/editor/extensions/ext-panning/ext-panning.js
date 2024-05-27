@@ -39,7 +39,8 @@ export default {
     return {
       name: svgEditor.i18next.t(`${name}:name`),
       callback () {
-        const btitle = `${name} [Space / mouse wheel + drag]`
+        // const btitle = `${name} [Space / mouse wheel + drag]`
+        const btitle = `平移[空格键/鼠标滚轮+拖动]`
         // Add the button and its handler(s)
         const buttonTemplate = document.createElement('template')
         buttonTemplate.innerHTML = `
